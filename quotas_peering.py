@@ -14,7 +14,7 @@ project_id = "monitoring-dashboards-d4c6"
 project_name = f"projects/{project_id}"
 
 # ROLES FOR SA: compute.network.viewer, monitoring.viewer
-SERVICE_ACCOUNT_FILE = 'maria-key.json'
+SERVICE_ACCOUNT_FILE = "<PATH TO KEY>"
 
 try:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = SERVICE_ACCOUNT_FILE
