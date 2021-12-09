@@ -5,16 +5,15 @@ import time
 import re
 import os
 
-# for multiple projects, add IAM role for perm for every project
-project_id = "monitoring-dashboards-d4c6"
-# project_id = "maria-wojtarkowska-lab-ff4b"
-# project_id = "vpn-other-end-f43f"
-# project_id = "project-acn-false-6bbd"
+# FILL
+    # for multiple projects, add IAM role for perm for every project
+project_id = "<PROJECT_ID>"
+
+    # ROLES FOR SA: compute.network.viewer, monitoring.viewer
+SERVICE_ACCOUNT_FILE = "<PATH TO KEY>"
+
 
 project_name = f"projects/{project_id}"
-
-# ROLES FOR SA: compute.network.viewer, monitoring.viewer
-SERVICE_ACCOUNT_FILE = "<PATH TO KEY>"
 
 try:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = SERVICE_ACCOUNT_FILE
