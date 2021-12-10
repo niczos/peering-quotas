@@ -8,7 +8,7 @@ provider "google" {
 
 locals {
   project_id = [
-    "<PROJECT TO BIND SA ROLES>",
+  "<PROJECT TO BIND SA ROLES>",
   ]
   project_id_list = toset(local.project_id)
   projects = join(",", local.project_id_list)
@@ -33,6 +33,14 @@ resource "google_project_iam_binding" "monitor" {
   for_each = local.project_id_list
   project = each.value
   role =  "roles/monitoring.viewer"
+  members = [
+  format("serviceAccount:%s", google_service_account.service_account.email)]
+}
+
+resource "google_project_iam_binding" "metric" {
+  for_each = local.project_id_list
+  project = each.value
+  role =  "roles/monitoring.metricWriter"
   members = [
   format("serviceAccount:%s", google_service_account.service_account.email)]
 }

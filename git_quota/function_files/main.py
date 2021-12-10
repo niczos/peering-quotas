@@ -3,6 +3,7 @@
 
 from google.cloud import monitoring_v3
 from googleapiclient import discovery
+from google.api import metric_pb2 as ga_metric
 import time
 import re
 import os
@@ -11,7 +12,37 @@ def quotas(event, context):
 
     project_id = os.environ.get("TF_VAR_PROJECT")
     project_name = f"projects/{project_id}"
+    metric_name = "effective-limit-for-vpc-network-peering"  # change if needed
     service = discovery.build('compute', 'beta')
+
+    def create_metric():
+        ########## CREATE CUSTOM METRIC ##########
+
+        client = monitoring_v3.MetricServiceClient()
+        descriptor = ga_metric.MetricDescriptor()
+        descriptor.type = f"custom.googleapis.com/{metric_name}"
+        descriptor.metric_kind = ga_metric.MetricDescriptor.MetricKind.GAUGE
+        descriptor.value_type = ga_metric.MetricDescriptor.ValueType.DOUBLE
+        descriptor.description = "Effective limit for VPC peering network metric."
+
+        descriptor = client.create_metric_descriptor(name=project_name, metric_descriptor=descriptor)
+        print("Created {}.".format(descriptor.name))
+
+    def write_data_to_metric(eff_limit,network_name):
+        series = monitoring_v3.TimeSeries()
+        series.metric.type = f"custom.googleapis.com/{metric_name}"
+        series.resource.type = "global" 
+        series.metric.labels["network_name"] = network_name
+ 
+        now = time.time()
+        seconds = int(now)
+        nanos = int((now - seconds) * 10 ** 9)
+        interval = monitoring_v3.TimeInterval({"end_time": {"seconds": seconds, "nanos": nanos}})
+        point = monitoring_v3.Point({"interval": interval, "value": {"double_value": eff_limit}})
+        series.points = [point]
+        client.create_time_series(name=project_name, time_series=[series])
+
+        print("Wrote number of vpc peered networks to metric.")
 
 
     def create_client():
@@ -104,6 +135,7 @@ def quotas(event, context):
                     minim = min(maxes.values())
         for i in maxes:
             eff_limit = max(maxes[i],minim)
+            write_data_to_metric(eff_limit,i)
             print(f'Effective limit for {i}: {eff_limit}')
 
 
@@ -127,6 +159,8 @@ def quotas(event, context):
 
 
     try:
+
+        create_metric()
         dict = list_networks(project_id)
 
         client, interval = create_client()
